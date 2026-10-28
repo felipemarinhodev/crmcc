@@ -1,0 +1,13 @@
+# Segredos: nunca vão junto quando o projeto for publicado
+.env*
+
+# Dependências e arquivos gerados pelo Next.js
+node_modules
+.next
+out
+*.tsbuildinfo
+next-env.d.ts
+
+# Arquivos do sistema e da hospedagem
+.DS_Store
+.vercel
