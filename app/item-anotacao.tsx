@@ -3,8 +3,14 @@
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { editarAnotacao, excluirAnotacao } from "./actions";
 import { ajustarAltura } from "./formulario-anotacao";
-import type { Anotacao } from "./linha-contato";
 import { validarEdicaoAnotacao } from "../lib/validacao";
+
+export type Anotacao = {
+  id: number;
+  texto: string;
+  criadoEm: string;
+  data: string;
+};
 
 // Uma anotação do histórico, com os links Editar e Excluir.
 export default function ItemAnotacao({ anotacao }: { anotacao: Anotacao }) {

@@ -1,6 +1,6 @@
 import { exigirAdmin } from "../../lib/acesso";
 import { supabase } from "../../lib/supabase";
-import BarraNavegacao from "../barra-navegacao";
+import Moldura from "../moldura";
 import BotaoAprovar from "./botao-aprovar";
 
 // Ex.: "26 de outubro de 2026", sempre no horário de Brasília.
@@ -24,76 +24,73 @@ export default async function PaginaUsuarios() {
   const aprovados = usuarios?.filter((usuario) => usuario.situacao === "aprovado") ?? [];
 
   return (
-    <>
-      <BarraNavegacao usuario={admin} atual="usuarios" />
-      <main className="pagina">
-        <header className="cabecalho">
-          <h1>Usuários</h1>
-          <p className="apoio">Aprove os novos cadastros e veja quem tem acesso ao CRM.</p>
-        </header>
+    <Moldura usuario={admin} atual="usuarios">
+      <header className="cabecalho">
+        <h1>Usuários</h1>
+        <p className="apoio">Aprove os novos cadastros e veja quem tem acesso ao CRM.</p>
+      </header>
 
-        {error ? (
+      {error ? (
+        <section className="cartao">
+          <p className="apoio">Não foi possível carregar os usuários.</p>
+        </section>
+      ) : (
+        <>
           <section className="cartao">
-            <p className="apoio">Não foi possível carregar os usuários.</p>
-          </section>
-        ) : (
-          <>
-            <section className="cartao">
-              <h2>Aguardando aprovação</h2>
-              {pendentes.length === 0 ? (
-                <p className="apoio">Nenhum cadastro aguardando aprovação.</p>
-              ) : (
-                <div className="tabela-rolagem">
-                  <table className="tabela">
-                    <thead>
-                      <tr>
-                        <th>Usuário</th>
-                        <th>Cadastrado em</th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pendentes.map((usuario) => (
-                        <tr key={usuario.id}>
-                          <td className="nome">{usuario.usuario}</td>
-                          <td>{DATA_LEGIVEL.format(new Date(usuario.criado_em))}</td>
-                          <td>
-                            <BotaoAprovar id={usuario.id} />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </section>
-
-            <section className="cartao">
-              <h2>Usuários aprovados</h2>
+            <h2>Aguardando aprovação</h2>
+            {pendentes.length === 0 ? (
+              <p className="apoio">Nenhum cadastro aguardando aprovação.</p>
+            ) : (
               <div className="tabela-rolagem">
                 <table className="tabela">
                   <thead>
                     <tr>
                       <th>Usuário</th>
-                      <th>Papel</th>
                       <th>Cadastrado em</th>
+                      <th></th>
                     </tr>
                   </thead>
                   <tbody>
-                    {aprovados.map((usuario) => (
+                    {pendentes.map((usuario) => (
                       <tr key={usuario.id}>
                         <td className="nome">{usuario.usuario}</td>
-                        <td>{ROTULO_PAPEL[usuario.papel]}</td>
-                        <td>{DATA_LEGIVEL.format(new Date(usuario.criado_em))}</td>
+                        <td className="dado">{DATA_LEGIVEL.format(new Date(usuario.criado_em))}</td>
+                        <td>
+                          <BotaoAprovar id={usuario.id} />
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-            </section>
-          </>
-        )}
-      </main>
-    </>
+            )}
+          </section>
+
+          <section className="cartao">
+            <h2>Usuários aprovados</h2>
+            <div className="tabela-rolagem">
+              <table className="tabela">
+                <thead>
+                  <tr>
+                    <th>Usuário</th>
+                    <th>Papel</th>
+                    <th>Cadastrado em</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {aprovados.map((usuario) => (
+                    <tr key={usuario.id}>
+                      <td className="nome">{usuario.usuario}</td>
+                      <td>{ROTULO_PAPEL[usuario.papel]}</td>
+                      <td className="dado">{DATA_LEGIVEL.format(new Date(usuario.criado_em))}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </>
+      )}
+    </Moldura>
   );
 }

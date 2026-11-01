@@ -18,26 +18,29 @@ import {
 
 export type EstadoFormulario = { erro: string | null };
 
+// "salvo" avisa a tela que o contato foi gravado, para mostrar a confirmação.
+export type EstadoContato = EstadoFormulario & { salvo: boolean };
+
 // Roda no servidor: confere os dados, grava no banco e atualiza a página.
 export async function salvarContato(
-  _estadoAnterior: EstadoFormulario,
+  _estadoAnterior: EstadoContato,
   formData: FormData,
-): Promise<EstadoFormulario> {
+): Promise<EstadoContato> {
   await exigirLogin();
 
   const resultado = validarContato(formData);
   if ("erro" in resultado) {
-    return { erro: resultado.erro };
+    return { erro: resultado.erro, salvo: false };
   }
 
   const { error } = await supabase.from("contatos").insert(resultado.dados);
 
   if (error) {
-    return { erro: "Não foi possível salvar o contato. Tente novamente." };
+    return { erro: "Não foi possível salvar o contato. Tente novamente.", salvo: false };
   }
 
   refresh();
-  return { erro: null };
+  return { erro: null, salvo: true };
 }
 
 // Roda no servidor: confere a anotação, grava no banco e atualiza a página do contato.
@@ -123,11 +126,10 @@ export async function mudarEtapa(contatoId: number, etapa: string): Promise<Esta
   return { erro: null };
 }
 
-export type ResultadoFollowUp = { texto: string } | { erro: string };
-
-// Roda no servidor: busca no banco o contato e as anotações dele e pede à IA
-// uma mensagem de follow-up. A chave da API nunca sai do servidor.
-export async function gerarFollowUp(contatoId: number): Promise<ResultadoFollowUp> {
+// Roda no servidor: busca no banco o contato e as anotações dele, pede à IA
+// uma mensagem de follow-up e guarda a mensagem no banco, com a data.
+// A chave da API nunca sai do servidor.
+export async function gerarFollowUp(contatoId: number): Promise<EstadoFormulario> {
   await exigirLogin();
 
   if (!Number.isInteger(contatoId) || contatoId <= 0) {
@@ -167,7 +169,16 @@ export async function gerarFollowUp(contatoId: number): Promise<ResultadoFollowU
     return { erro: "Não foi possível gerar o follow-up agora. Tente novamente em instantes." };
   }
 
-  return { texto };
+  const { error } = await supabase
+    .from("follow_ups")
+    .insert({ contato_id: contatoId, texto });
+
+  if (error) {
+    return { erro: "O follow-up foi escrito, mas não foi possível guardá-lo. Tente novamente." };
+  }
+
+  refresh();
+  return { erro: null };
 }
 
 export type EstadoLogin = { erro: string | null; usuario: string };

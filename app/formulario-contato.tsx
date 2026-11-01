@@ -1,11 +1,22 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useState } from "react";
-import { salvarContato } from "./actions";
+import { salvarContato, type EstadoContato } from "./actions";
 import { mascararTelefone, validarContato, type Campo } from "../lib/validacao";
 
-export default function FormularioContato() {
-  const [estado, acao, salvando] = useActionState(salvarContato, { erro: null });
+// aoSalvar e aoCancelar são usados quando o formulário abre numa janela (no Funil).
+type Props = { aoSalvar?: () => void; aoCancelar?: () => void };
+
+export default function FormularioContato({ aoSalvar, aoCancelar }: Props) {
+  const [estado, acao, salvando] = useActionState(
+    async (estadoAnterior: EstadoContato, formData: FormData) => {
+      const resultado = await salvarContato(estadoAnterior, formData);
+      if (resultado.salvo) aoSalvar?.();
+      return resultado;
+    },
+    { erro: null, salvo: false },
+  );
   const [erroCampo, setErroCampo] = useState<{
     campo: Campo;
     erro: string;
@@ -28,6 +39,8 @@ export default function FormularioContato() {
   const erro = erroCampo?.erro ?? estado.erro;
   const invalido = (campo: Campo) =>
     erroCampo?.campo === campo ? true : undefined;
+  // A confirmação some ao tentar salvar de novo ou quando aparece um erro.
+  const salvo = estado.salvo && !erroCampo && !salvando;
 
   return (
     <form action={acao} onSubmit={aoEnviar} noValidate className="formulario">
@@ -79,8 +92,23 @@ export default function FormularioContato() {
         <button type="submit" className="botao" disabled={salvando}>
           {salvando ? "Salvando..." : "Salvar contato"}
         </button>
+        {aoCancelar && (
+          <button type="button" className="link" onClick={aoCancelar}>
+            Cancelar
+          </button>
+        )}
         <p id="erro-formulario" className="erro" aria-live="polite">
           {erro}
+        </p>
+        <p className="aviso" aria-live="polite">
+          {salvo && (
+            <>
+              Contato salvo.{" "}
+              <Link href="/funil" className="link">
+                Ver no Funil
+              </Link>
+            </>
+          )}
         </p>
       </div>
     </form>
